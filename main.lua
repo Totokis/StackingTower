@@ -33,7 +33,7 @@ Box = {width = 0, height = 0, xPos = 0, yPos = 0, rightOffsetX = 0, leftOffsetX 
 
 --cooldown
 local cooldownPress = 0
-local cooldownValue = 30 --this might be changed
+local cooldownValue = 25 --this might be changed
 
 function cooldownResetUpdate()
   if(cooldownPress>0) then
@@ -49,6 +49,7 @@ function reset()
     mover = 1
     moveSpeed = 4
     setPlayerBox()
+    boxes = {}
     boxes = {box1}
     isLose = false
     chunkDropped = false
@@ -69,7 +70,7 @@ end
 -- LOAD --------------------------------------
 function love.load()
     -- images
-    wallImg = love.graphics.newImage("wall_test.png")
+    wallImg = love.graphics.newImage("brickwall.png")
     background = love.graphics.newImage("bg.png")
     wallBlinkMask = love.graphics.newImage("wall_test_blinMask.png")
 
