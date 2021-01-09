@@ -9,8 +9,11 @@ local mover = 1
 local moveSpeed = 4
 local boxWidth = 200
 local boxHeight = 100
-local perfectPlacePercentage = 0.04
+local perfectPlacePercentage = 0.05
 local boxCountToStartCamera = 2
+local blinkActive = false;
+local alphaIncrementator = 0.1;
+local alphaLevel = 0.1
 
 --camera
 local shiftedHeight = 0
@@ -52,10 +55,12 @@ function Box:create (o)
     return o
 end
 
+-- LOAD --------------------------------------
 function love.load()
     -- images
     wallImg = love.graphics.newImage("wall_test.png")
     background = love.graphics.newImage("bg_test.png")
+    wallBlinkMask = love.graphics.newImage("wall_test_blinMask.png")
 
 	playerWidth = 200
 	playerHeigth = 100
@@ -88,6 +93,7 @@ function setPlayerBox()
     player.y = heightScreen - height
 end
 
+-- UPDATE --------------------------------------
 function love.update(dt)
     cooldownResetUpdate()
 
@@ -154,10 +160,11 @@ function cutBlock()
     else 
         if offsetX > 0 then
             -- perfect placement
-            if offsetX <= boxes[#boxes].width * perfectPlacePercentage then
+            if offsetX <= boxWidth * perfectPlacePercentage then
                 newBox.xPos = boxes[#boxes].xPos
                 newBox.width = boxes[#boxes].width
                 print('perfect throw')
+                PerfetctPlaceBlink()
             else
                 -- Wystaje z lewej
                 newBox.xPos = player.x + offsetX
@@ -167,10 +174,11 @@ function cutBlock()
 		-- Wystaje z prawej
         elseif offsetX < 0 then
             -- perfect placement
-            if offsetX*-1 <= boxes[#boxes].width * perfectPlacePercentage then
+            if offsetX*-1 <= boxWidth * perfectPlacePercentage then
                 newBox.xPos = boxes[#boxes].xPos
                 newBox.width = boxes[#boxes].width
                 print('perfect throw')
+                PerfetctPlaceBlink()
             else
                 -- wystaje z prawej
                 newBox.xPos = player.x
@@ -181,6 +189,7 @@ function cutBlock()
             print('perfect throw')
             newBox.xPos = boxes[#boxes].xPos
             newBox.width = boxes[#boxes].width
+            PerfetctPlaceBlink()
 		end
 
 		return true
@@ -224,6 +233,7 @@ function drawHelpers()
    end
 end
 
+-- DRAW --------------------------------------
 function love.draw()
     --now it draws lose screen if you lose and game screen if you are still playing
     if(isLose==false) then
@@ -239,6 +249,31 @@ function love.draw()
         wallQuad = love.graphics.newQuad(0, 0, playerWidth, playerHeigth, wallImg:getWidth(), wallImg:getHeight())
         love.graphics.draw(wallImg, wallQuad, player.x, player.y)
         drawBoxes()
+        -- Jak perfect place był to nakładaj maske z zaznaczeniem 
+        if (blinkActive) then
+            -- obszar gdzie nałożone będą na grafike transformacje
+            love.graphics.push()
+
+            -- stopniopowo pokazuj zaznazcenie (mignięcie)
+            love.graphics.setColor(1, 1, 1, alphaLevel)
+            alphaLevel = alphaLevel + alphaIncrementator
+            -- doskaluj do zaznaczenie do uciętego boxa
+            love.graphics.scale(boxes[#boxes].width/boxWidth, 1)
+            love.graphics.draw(wallBlinkMask, boxes[#boxes].xPos/(boxes[#boxes].width/boxWidth), boxes[#boxes].yPos)
+
+            if (alphaLevel >= 1) then
+                alphaIncrementator = - alphaIncrementator
+            end
+
+            if (alphaLevel <= 0) then
+                blinkActive = false
+                alphaIncrementator = - alphaIncrementator
+                alphaLevel = 0
+            end
+            -- wyjście z obszaru
+            love.graphics.pop()
+            love.graphics.setColor(1, 1, 1, 1)
+        end
         -- koordynaty
         drawHelpers()
     else
@@ -262,4 +297,8 @@ function loseDraw()
     love.graphics.print("Your score: " .. lockedScore, w/2 - 50, h/2-130)
     love.graphics.print("Press R to reset", w/2 - 50, h/2-110)
     
+end
+
+function PerfetctPlaceBlink()
+    blinkActive = true;
 end
