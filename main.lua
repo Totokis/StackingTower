@@ -55,8 +55,8 @@ local cameraSpeed = 1.5
 local fallingMultiplier = 5
 
 --THE REAL PLAYER (not the fancy block that pretend that he is a player while he is not)
-local theRealPlayerHorizontalSpeed = 15
-local theRealPlayerVerticalSpeed = 1--3.5
+local theRealPlayerHorizontalSpeed = 8
+local theRealPlayerVerticalSpeed = 2.5--3.5
 local theRealPlayerX = love.graphics.getWidth()/2-50
 local theRealPlayerY = 0
 
@@ -65,9 +65,6 @@ Box = {width = 0, height = 0, xPos = 0, yPos = 0, rightOffsetX = 0, leftOffsetX 
 
 --point class
 Point = {width = 0, height = 0, xPos = 0, yPos = 0}
-
---FallingPlayer
-FallingPlayer = {width = 0, height = 0, xPos = 0, yPos = 0}
 
 --cooldown
 local cooldownPress = 0
@@ -180,8 +177,8 @@ end
 -- UPDATE --------------------------------------
 function love.update(dt)
 
-        -- update physics
-        world:update(dt)
+    -- update physics
+    world:update(dt)
 
     --cooldown is used in different gamemodes so better always update it
     cooldownResetUpdate()
@@ -201,26 +198,26 @@ function love.update(dt)
             mover = 1
         end
 
-    player.x = player.x + mover*moveSpeed
+        player.x = player.x + mover*moveSpeed
 		
 	if (love.mouse.isDown("1") and cooldownPress==0) then
 		newBox = Box:create{width = playerWidth, height = playerHeigth, xPos = player.x, yPos = player.y, rightOffsetX = 0, leftOffsetX = boxes[#boxes].leftOffsetX}
-		if cutBlock() then 
+        
+        if cutBlock() then 
 			table.insert(boxes, newBox)
 			playerWidth = newBox.width
 			playerHeigth = newBox.height
 			setPlayerBox()
 	        score = #boxes*boxHeight
             shiftCameraByBoxSize()
-            
+            changeDifficultyLevel()
+            cooldownPress=cooldownValue
 		else
             if gameMode == GameMode.STACKING_TOWER then
                 GoToPreparationMode()
             end
-            
-    		changeDifficultyLevel()
-            cooldownPress=cooldownValue
         end
+    end
     elseif(gameMode==GameMode.PREPARATION) then
         updatePositionOfRealPlayer()
 
