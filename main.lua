@@ -1,14 +1,8 @@
-
 -- physics
 pixelToMeter = 32
 love.physics.setMeter(pixelToMeter)
 local world = love.physics.newWorld(0, 9.81*pixelToMeter, true)
 local objects = {}
-
-
---lose condition
-local isLose = false --TODELETE
-
 
 --gamemode
 GameMode = {
@@ -22,6 +16,7 @@ local gameMode = GameMode.STACKING_TOWER
 -- fonts
 local smallFont = love.graphics.newFont(10) --never used anyway lmao
 local normalFont = love.graphics.newFont(15)
+local scoreFont = love.graphics.newFont(30)
 local bigFont = love.graphics.newFont(50)
 local hugeFont = love.graphics.newFont(250)
 
@@ -31,7 +26,6 @@ local countingDownNumber = countingDownNumberToSet
 
 --score
 local score = 100
-local lockedScore = 0
 local scoreValueOfPoint = 150
 
 -- game parameters
@@ -86,6 +80,7 @@ function checkCollision(x1,y1,w1,h1, x2,y2,w2,h2)
 
 -- RESET
 function reset()
+    print("reset")
     score = 100
     playerHeigth = boxHeight
     playerWidth = boxWidth
@@ -101,7 +96,9 @@ function reset()
     objects = {}
 
     points = {}
-    gameMode = STACKING_TOWER
+    theRealPlayerX = love.graphics.getWidth()/2-50
+    theRealPlayerY = 0
+    gameMode = GameMode.STACKING_TOWER
 
     destinatedCameraHeight = -boxCountToStartCamera * boxHeight
     currentCameraHeight = 0
@@ -176,7 +173,7 @@ end
 
 -- UPDATE --------------------------------------
 function love.update(dt)
-
+    print("updejt")
     -- update physics
     world:update(dt)
 
@@ -188,8 +185,8 @@ function love.update(dt)
         reset()
     end
 
-
     if(gameMode==GameMode.STACKING_TOWER) then
+        print("stacking")
         if player.x >= (widthScreen - boxWidth)  then
             mover = -1
         end
@@ -200,25 +197,26 @@ function love.update(dt)
 
         player.x = player.x + mover*moveSpeed
 		
-	if (love.mouse.isDown("1") and cooldownPress==0) then
-		newBox = Box:create{width = playerWidth, height = playerHeigth, xPos = player.x, yPos = player.y, rightOffsetX = 0, leftOffsetX = boxes[#boxes].leftOffsetX}
-        
-        if cutBlock() then 
-			table.insert(boxes, newBox)
-			playerWidth = newBox.width
-			playerHeigth = newBox.height
-			setPlayerBox()
-	        score = #boxes*boxHeight
-            shiftCameraByBoxSize()
-            changeDifficultyLevel()
-            cooldownPress=cooldownValue
-		else
-            if gameMode == GameMode.STACKING_TOWER then
-                GoToPreparationMode()
+        if (love.mouse.isDown("1") and cooldownPress==0) then
+            newBox = Box:create{width = playerWidth, height = playerHeigth, xPos = player.x, yPos = player.y, rightOffsetX = 0, leftOffsetX = boxes[#boxes].leftOffsetX}
+            
+            if cutBlock() then 
+                table.insert(boxes, newBox)
+                playerWidth = newBox.width
+                playerHeigth = newBox.height
+                setPlayerBox()
+                score = #boxes*boxHeight
+                shiftCameraByBoxSize()
+                changeDifficultyLevel()
+                cooldownPress=cooldownValue
+            else
+                if gameMode == GameMode.STACKING_TOWER then
+                    GoToPreparationMode()
+                end
             end
         end
-    end
     elseif(gameMode==GameMode.PREPARATION) then
+        print("preparation")
         updatePositionOfRealPlayer()
 
         --counting goes down and cooldown is being reset
@@ -233,6 +231,7 @@ function love.update(dt)
         end
 
     elseif(gameMode==GameMode.FALLING) then
+        print("falling")
         checkCollisionsAndDeletePoints()
         updatePositionOfRealPlayer()
 
@@ -244,6 +243,7 @@ function love.update(dt)
         end
             
     elseif(gameMode==GameMode.END_GAME) then
+        print("end")
         --game ends here
     end
 end
@@ -361,11 +361,12 @@ function drawHelpers()
         love.graphics.line(leftMargin,i,leftMargin+10,i)
         love.graphics.print(-i+heightScreen,leftMargin+10,i)
     end
+end
 
-   --for not debugging, priting score
-   for i=base,maxHeight,-base do
-       love.graphics.print("Score: " .. score, widthScreen-250, i+15)
-   end
+function drawScore()
+    love.graphics.setFont(scoreFont)
+    love.graphics.print("Score: " .. score, widthScreen-200, 0-currentCameraHeight+30)
+    love.graphics.setFont(normalFont)
 end
 
 -- DRAW --------------------------------------
@@ -381,7 +382,7 @@ function love.draw()
 
     --now it draws lose screen if you lose and game screen if you are still playing
     if(gameMode==GameMode.STACKING_TOWER) then
-        love.graphics.draw(background, 0, 0 - background:getHeight()+heightScreen)
+        drawBackground()
     
 
         -- player template
@@ -419,31 +420,33 @@ function love.draw()
         end
 
         RenderDropPart()
-
         -- koordynaty
         drawHelpers()
+        drawScore()
     elseif(gameMode==GameMode.PREPARATION) then
-        love.graphics.draw(background, 0, 0 - background:getHeight()+heightScreen)
+        drawBackground()
         drawBoxes()
-
+        drawScore()
         drawRealPlayer()
-
-        love.graphics.setFont(hugeFont)
-        love.graphics.print(countingDownNumber, love.graphics.getWidth()/2 - 50, 0 - currentCameraHeight)
-        --loseDraw()
+        drawCounter()
     elseif(gameMode==GameMode.FALLING) then
-        love.graphics.draw(background, 0, 0 - background:getHeight()+heightScreen)
+        drawBackground()
         drawBoxes()
         drawPoints()
+        drawScore()
         drawRealPlayer()
-
-        -- do something
     elseif(gameMode==GameMode.END_GAME) then
         drawLose()
     end
+end
 
-    --debug print playground
+function drawCounter()
+    love.graphics.setFont(hugeFont)
+    love.graphics.print(countingDownNumber, love.graphics.getWidth()/2 - 50, 0 - currentCameraHeight)
+end
 
+function drawBackground()
+    love.graphics.draw(background, 0, 0 - background:getHeight()+heightScreen)
 end
 
 function drawRealPlayer()
@@ -469,7 +472,7 @@ function checkCollisionsAndDeletePoints()
         playerImg:getWidth(), playerImg:getHeight(), 
         points[p].xPos, points[p].yPos, 
         pointImg:getWidth(), pointImg:getHeight())) then
-            lockedScore = lockedScore + scoreValueOfPoint
+            score = score + scoreValueOfPoint
             table.remove(points, p)
         end
     end
@@ -482,7 +485,7 @@ function drawLose()
     love.graphics.setFont(bigFont)
     love.graphics.print("GAME OVER", w/2-150, h/2-200)
     love.graphics.setFont(normalFont)
-    love.graphics.print("Your score: " .. lockedScore, w/2 - 60, h/2-130)
+    love.graphics.print("Your score: " .. score, w/2 - 60, h/2-130)
     
     love.graphics.print("Press R to reset", w/2 - 60, h/2-110)
     
@@ -547,8 +550,6 @@ end
 
 --mode-changing functions
 function GoToPreparationMode()
-    lockedScore = score
-
     updatePositionOfRealPlayer()
 
     cooldownPress = 30
@@ -563,7 +564,6 @@ function GoToFallingMode()
     --camera speed is set to the realPlayer's speed which is ugly solution but reliable (until one day...)
     cameraSpeed = theRealPlayerVerticalSpeed
     PreparePoints()
-
     gameMode = GameMode.FALLING
 end
 
