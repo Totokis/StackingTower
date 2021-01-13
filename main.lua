@@ -127,6 +127,10 @@ function love.load()
     pointImg = love.graphics.newImage("player.png") --!!!
     playerImg = love.graphics.newImage("realPlayer.png")
 
+    --audio
+    pointAudio = love.audio.newSource("MouseClick.mp3", "static")
+    blockAudio = love.audio.newSource("MouseClick.mp3", "static")
+
 	playerWidth = 200
 	playerHeigth = 100
 
@@ -201,6 +205,7 @@ function love.update(dt)
             newBox = Box:create{width = playerWidth, height = playerHeigth, xPos = player.x, yPos = player.y, rightOffsetX = 0, leftOffsetX = boxes[#boxes].leftOffsetX}
             
             if cutBlock() then 
+                playBlockSound()
                 table.insert(boxes, newBox)
                 playerWidth = newBox.width
                 playerHeigth = newBox.height
@@ -246,6 +251,16 @@ function love.update(dt)
         print("end")
         --game ends here
     end
+end
+
+function playBlockSound()
+    love.audio.stop()
+    blockAudio:play()
+end
+
+function playPointSound()
+    love.audio.stop()
+    pointAudio:play()
 end
 
 function changeDifficultyLevel()
@@ -472,6 +487,7 @@ function checkCollisionsAndDeletePoints()
         playerImg:getWidth(), playerImg:getHeight(), 
         points[p].xPos, points[p].yPos, 
         pointImg:getWidth(), pointImg:getHeight())) then
+            playPointSound()   
             score = score + scoreValueOfPoint
             table.remove(points, p)
         end
