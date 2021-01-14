@@ -128,8 +128,8 @@ function love.load()
     playerImg = love.graphics.newImage("realPlayer.png")
 
     --audio
-    pointAudio = love.audio.newSource("MouseClick.mp3", "static")
-    blockAudio = love.audio.newSource("MouseClick.mp3", "static")
+    pointAudio = love.audio.newSource("point.wav", "static")
+    blockAudio = love.audio.newSource("brick_sound.wav", "static")
 
 	playerWidth = 200
 	playerHeigth = 100
